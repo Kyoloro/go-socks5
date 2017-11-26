@@ -24,6 +24,10 @@
 > ./main
 ```
 
+### node.js 版本
+
+[node.js github.com](https://github.com/Kyoloro/node-socks5)
+
 ### macOS `socks5` 代理
 
 ![pic](media/socks5_mac_set.jpeg)
