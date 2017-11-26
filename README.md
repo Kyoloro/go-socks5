@@ -19,7 +19,9 @@
 ### 启动
 
 ```sh
-go run main.go
+> go build main.go
+
+> ./main
 ```
 
 ### macOS `socks5` 代理
