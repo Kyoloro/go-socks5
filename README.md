@@ -1,6 +1,6 @@
 # go socks5 server
 
-基于 go 与 socks5 协议的，简单穿墙服务实践
+基于 go 与 socks5 协议的，**简单**穿墙服务实践
 
 [wikipedia socks5 协议内容](https://zh.wikipedia.org/wiki/SOCKS)
 
