@@ -7,7 +7,8 @@
 ### 功能点
 
 - [x] 域名代理
-- [ ] ipv4, ipv6代理
+- [x] ipv4代理
+- [ ] ipv6代理
 - [x] handshake 阶段
 - [ ] auth 验证
 - [x] request 阶段

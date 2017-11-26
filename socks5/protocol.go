@@ -37,6 +37,8 @@ type (
 )
 
 func (sp *serverProtocol) Process() {
+	defer sp.close()
+
 	for {
 		b := make([]byte, ServerConfig.TcpBufferSize)
 		n, err := sp.conn.Read(b)
@@ -47,7 +49,8 @@ func (sp *serverProtocol) Process() {
 
 		next, err := sp.processor(b[:n])
 		if err != nil {
-			goto CLOSE
+			log.Println(err)
+			break
 		}
 
 		if next != nil {
@@ -60,7 +63,8 @@ func (sp *serverProtocol) Process() {
 		if err != nil {
 			// 0x04 主机不可达
 			sp.conn.Write([]byte{Socks5Version, 0x04, 0x00, AddressTypeIpv4})
-			goto CLOSE
+			log.Println(err)
+			break
 		}
 
 		sp.conn.Write([]byte{Socks5Version, 0x00, 0x00, AddressTypeIpv4})
@@ -71,8 +75,9 @@ func (sp *serverProtocol) Process() {
 		st := NewSecureTransport(remote, sp.conn)
 		st.Pip()
 	}
+}
 
-CLOSE:
+func (sp *serverProtocol) close() {
 	log.Println("客户端连接段断开")
 	sp.conn.Close()
 }
@@ -102,6 +107,20 @@ func (sp *serverProtocol) request(b []byte) (processor, error) {
 	atype := b[3]
 
 	switch atype {
+	case AddressTypeIpv4:
+		ip := net.IPv4(b[4], b[5], b[6], b[7])
+
+		var port uint16
+		portRaw := b[8:10]
+		err := binary.Read(bytes.NewBuffer(portRaw), binary.BigEndian, &port)
+		if err != nil {
+			return nil, errors.New("目标端口解析异常")
+		}
+
+		sp.remoteAddr = fmt.Sprintf("%s:%d", ip.String(), port)
+		log.Printf("目标地址ip访问: %s\n", sp.remoteAddr)
+		sp.remoteAddrRaw = b[4:10]
+
 	case AddressTypeDomain:
 		domainLength := b[4]
 
@@ -115,7 +134,11 @@ func (sp *serverProtocol) request(b []byte) (processor, error) {
 
 		var port uint16
 		portRaw := b[domainLength+5 : domainLength+7]
-		binary.Read(bytes.NewBuffer(portRaw), binary.BigEndian, &port)
+		err = binary.Read(bytes.NewBuffer(portRaw), binary.BigEndian, &port)
+		if err != nil {
+			return nil, errors.New("目标端端口解析异常")
+		}
+
 		sp.remoteAddr = fmt.Sprintf("%s:%d", addr[0], port)
 		log.Printf("目标地址ip访问: %s\n", sp.remoteAddr)
 
